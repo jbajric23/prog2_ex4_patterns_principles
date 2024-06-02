@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-public class MovieListController implements Initializable {
+public class MovieListController implements Initializable, Observer {
     @FXML
     public JFXButton searchBtn;
 
@@ -73,8 +73,8 @@ public class MovieListController implements Initializable {
             WatchlistMovieEntity watchlistMovieEntity = new WatchlistMovieEntity(
                     movie.getId());
             try {
-                WatchlistRepository repository = new WatchlistRepository();
-                repository.addToWatchlist(watchlistMovieEntity);
+                WatchlistRepository.getInstance().addToWatchlist(watchlistMovieEntity);
+
             } catch (DataBaseException e) {
                 UserDialog dialog = new UserDialog("Database Error", "Could not add movie to watchlist");
                 dialog.show();
@@ -85,6 +85,13 @@ public class MovieListController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        try {
+            WatchlistRepository.getInstance().addObserver(this);
+
+        } catch (DataBaseException e) {
+            throw new RuntimeException(e);
+        }
+
         initializeState();
         initializeLayout();
     }
@@ -94,7 +101,7 @@ public class MovieListController implements Initializable {
         try {
             result = MovieAPI.getAllMovies();
             writeCache(result);
-        } catch (MovieApiException e){
+        } catch (MovieApiException e) {
             UserDialog dialog = new UserDialog("MovieAPI Error", "Could not load movies from api. Get movies from db cache instead");
             dialog.show();
             result = readCache();
@@ -108,7 +115,7 @@ public class MovieListController implements Initializable {
 
     private List<Movie> readCache() {
         try {
-            MovieRepository movieRepository = new MovieRepository();
+            MovieRepository movieRepository = MovieRepository.getInstance();
             return MovieEntity.toMovies(movieRepository.getAllMovies());
         } catch (DataBaseException e) {
             UserDialog dialog = new UserDialog("DB Error", "Could not load movies from DB");
@@ -120,7 +127,7 @@ public class MovieListController implements Initializable {
     private void writeCache(List<Movie> movies) {
         try {
             // cache movies in db
-            MovieRepository movieRepository = new MovieRepository();
+            MovieRepository movieRepository = MovieRepository.getInstance();
             movieRepository.removeAll();
             movieRepository.addAllMovies(movies);
 
@@ -171,10 +178,10 @@ public class MovieListController implements Initializable {
         observableMovies.addAll(movies);
     }
 
-    public List<Movie> filterByQuery(List<Movie> movies, String query){
-        if(query == null || query.isEmpty()) return movies;
+    public List<Movie> filterByQuery(List<Movie> movies, String query) {
+        if (query == null || query.isEmpty()) return movies;
 
-        if(movies == null) {
+        if (movies == null) {
             throw new IllegalArgumentException("movies must not be null");
         }
 
@@ -184,10 +191,10 @@ public class MovieListController implements Initializable {
                 .toList();
     }
 
-    public List<Movie> filterByGenre(List<Movie> movies, Genre genre){
-        if(genre == null) return movies;
+    public List<Movie> filterByGenre(List<Movie> movies, Genre genre) {
+        if (genre == null) return movies;
 
-        if(movies == null) {
+        if (movies == null) {
             throw new IllegalArgumentException("movies must not be null");
         }
 
@@ -216,7 +223,7 @@ public class MovieListController implements Initializable {
         String genreValue = validateComboboxValue(genreComboBox.getSelectionModel().getSelectedItem());
 
         Genre genre = null;
-        if(genreValue != null) {
+        if (genreValue != null) {
             genre = Genre.valueOf(genreValue);
         }
 
@@ -233,16 +240,16 @@ public class MovieListController implements Initializable {
     }
 
     public String validateComboboxValue(Object value) {
-        if(value != null && !value.toString().equals("No filter")) {
+        if (value != null && !value.toString().equals("No filter")) {
             return value.toString();
         }
         return null;
     }
 
     public List<Movie> getMovies(String searchQuery, Genre genre, String releaseYear, String ratingFrom) {
-        try{
+        try {
             return MovieAPI.getAllMovies(searchQuery, genre, releaseYear, ratingFrom);
-        }catch (MovieApiException e){
+        } catch (MovieApiException e) {
             System.out.println(e.getMessage());
             UserDialog dialog = new UserDialog("MovieApi Error", "Could not load movies from api.");
             dialog.show();
@@ -253,10 +260,34 @@ public class MovieListController implements Initializable {
     /**
      * Method to sort the movies
      * Switches the current state to the next state in the first place
+     *
      * @param actionEvent
      */
     public void sortBtnClicked(ActionEvent actionEvent) {
         currentState.nextSortState();
         sortMovies();
     }
+
+    @Override
+    public void update() {
+        System.out.println("Update called");
+        try {
+            WatchlistRepository repository = WatchlistRepository.getInstance();
+            WatchlistMovieEntity lastModifiedMovie = repository.getLastModifiedMovie();
+            if (lastModifiedMovie != null) {
+                if (repository.wasAddedToWatchlist()) {
+                    UserDialog dialog = new UserDialog("Information", "Der Film  wurde zur Watchlist hinzugefügt.");
+                    dialog.show();
+                } else {
+                    UserDialog dialog = new UserDialog("Information", "Der Film  ist bereits in der Watchlist.");
+                    dialog.show();
+                }
+            }
+        } catch (DataBaseException e) {
+            UserDialog dialog = new UserDialog("Database Error", "Could not load watchlist from database");
+            dialog.show();
+            e.printStackTrace();
+        }
+    }
 }
+
