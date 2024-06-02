@@ -4,6 +4,7 @@ import at.ac.fhcampuswien.fhmdb.database.DataBaseException;
 import at.ac.fhcampuswien.fhmdb.database.Observer;
 import at.ac.fhcampuswien.fhmdb.database.WatchlistRepository;
 import at.ac.fhcampuswien.fhmdb.enums.UIComponent;
+import at.ac.fhcampuswien.fhmdb.enums.UpdateType;
 import at.ac.fhcampuswien.fhmdb.models.Movie;
 import com.jfoenix.controls.*;
 import com.jfoenix.transitions.hamburger.HamburgerBasicCloseTransition;
@@ -46,29 +47,29 @@ public class MainController implements Observer {
 
         // Observer pattern
         try {
-        WatchlistRepository watchlistRepository = WatchlistRepository.getInstance();
-        watchlistRepository.addObserver(this);
+            WatchlistRepository watchlistRepository = WatchlistRepository.getInstance();
+            watchlistRepository.addObserver(this);
         } catch (DataBaseException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void toggleHamburgerTransitionState(){
+    private void toggleHamburgerTransitionState() {
         transition.setRate(transition.getRate() * -1);
         transition.play();
     }
 
-    private void toggleMenuDrawer(){
+    private void toggleMenuDrawer() {
         toggleHamburgerTransitionState();
 
-        if(isMenuCollapsed) {
-            TranslateTransition translateTransition=new TranslateTransition(Duration.seconds(0.5), drawer);
+        if (isMenuCollapsed) {
+            TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.5), drawer);
             translateTransition.setByX(130);
             translateTransition.play();
             isMenuCollapsed = false;
             drawer.toFront();
         } else {
-            TranslateTransition translateTransition=new TranslateTransition(Duration.seconds(0.5), drawer);
+            TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.5), drawer);
             translateTransition.setByX(-130);
             translateTransition.play();
             isMenuCollapsed = true;
@@ -76,7 +77,7 @@ public class MainController implements Observer {
         }
     }
 
-    public void setContent(String fxmlPath){
+    public void setContent(String fxmlPath) {
         FXMLLoader loader = new FXMLLoader(MainController.class.getResource(fxmlPath));
         try {
             mainPane.setCenter(loader.load());
@@ -84,7 +85,7 @@ public class MainController implements Observer {
             e.printStackTrace();
         }
 
-        if(!isMenuCollapsed){
+        if (!isMenuCollapsed) {
             toggleMenuDrawer();
         }
     }
@@ -133,8 +134,12 @@ public class MainController implements Observer {
     }
 
     @Override
-    public void update() {
-//        try {
+    public void update(UpdateType updateType) {
+
+    }
+
+}
+    //        try {
 //            WatchlistRepository repository = new WatchlistRepository();
 //            List<Movie> watchlist = repository.getWatchlist();
 //            for (Movie movie : allMovies) {
@@ -148,7 +153,7 @@ public class MainController implements Observer {
 //            showPopup("Database Error: " + e.getMessage());
 //            e.printStackTrace();
 //        }
-    }
+
 
 //    private void showPopup(String message) {
 //        Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -157,4 +162,3 @@ public class MainController implements Observer {
 //        alert.setContentText(message);
 //        alert.showAndWait();
 //    }
-}
