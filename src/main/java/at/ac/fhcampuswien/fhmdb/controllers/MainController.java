@@ -1,12 +1,17 @@
 package at.ac.fhcampuswien.fhmdb.controllers;
 
+import at.ac.fhcampuswien.fhmdb.database.DataBaseException;
+import at.ac.fhcampuswien.fhmdb.database.Observer;
+import at.ac.fhcampuswien.fhmdb.database.WatchlistRepository;
 import at.ac.fhcampuswien.fhmdb.enums.UIComponent;
+import at.ac.fhcampuswien.fhmdb.enums.UpdateType;
 import at.ac.fhcampuswien.fhmdb.models.Movie;
 import com.jfoenix.controls.*;
 import com.jfoenix.transitions.hamburger.HamburgerBasicCloseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Alert;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Duration;
@@ -15,7 +20,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class MainController {
+public class MainController implements Observer {
     @FXML
     public JFXHamburger hamburgerMenu;
 
@@ -29,7 +34,7 @@ public class MainController {
 
     private HamburgerBasicCloseTransition transition;
 
-    public void initialize() {
+    public void initialize() throws DataBaseException {
         transition = new HamburgerBasicCloseTransition(hamburgerMenu);
         transition.setRate(-1);
         drawer.toBack();
@@ -39,24 +44,32 @@ public class MainController {
         });
         // start with home view
         navigateToMovielist();
+
+        // Observer pattern
+        try {
+            WatchlistRepository watchlistRepository = WatchlistRepository.getInstance();
+            watchlistRepository.addObserver(this);
+        } catch (DataBaseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void toggleHamburgerTransitionState(){
+    private void toggleHamburgerTransitionState() {
         transition.setRate(transition.getRate() * -1);
         transition.play();
     }
 
-    private void toggleMenuDrawer(){
+    private void toggleMenuDrawer() {
         toggleHamburgerTransitionState();
 
-        if(isMenuCollapsed) {
-            TranslateTransition translateTransition=new TranslateTransition(Duration.seconds(0.5), drawer);
+        if (isMenuCollapsed) {
+            TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.5), drawer);
             translateTransition.setByX(130);
             translateTransition.play();
             isMenuCollapsed = false;
             drawer.toFront();
         } else {
-            TranslateTransition translateTransition=new TranslateTransition(Duration.seconds(0.5), drawer);
+            TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.5), drawer);
             translateTransition.setByX(-130);
             translateTransition.play();
             isMenuCollapsed = true;
@@ -64,7 +77,7 @@ public class MainController {
         }
     }
 
-    public void setContent(String fxmlPath){
+    public void setContent(String fxmlPath) {
         FXMLLoader loader = new FXMLLoader(MainController.class.getResource(fxmlPath));
         try {
             mainPane.setCenter(loader.load());
@@ -72,7 +85,7 @@ public class MainController {
             e.printStackTrace();
         }
 
-        if(!isMenuCollapsed){
+        if (!isMenuCollapsed) {
             toggleMenuDrawer();
         }
     }
@@ -119,4 +132,33 @@ public class MainController {
     public void navigateToMovielist() {
         setContent(UIComponent.MOVIELIST.path);
     }
+
+    @Override
+    public void update(UpdateType updateType) {
+
+    }
+
 }
+    //        try {
+//            WatchlistRepository repository = new WatchlistRepository();
+//            List<Movie> watchlist = repository.getWatchlist();
+//            for (Movie movie : allMovies) {
+//                if (watchlist.contains(movie)) {
+//                    showPopup("Der Film " + movie.getTitle() + " ist bereits in der Watchlist.");
+//                } else {
+//                    showPopup("Der Film " + movie.getTitle() + " wurde zur Watchlist hinzugefügt.");
+//                }
+//            }
+//        } catch (DataBaseException e) {
+//            showPopup("Database Error: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+
+
+//    private void showPopup(String message) {
+//        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+//        alert.setTitle("Information");
+//        alert.setHeaderText(null);
+//        alert.setContentText(message);
+//        alert.showAndWait();
+//    }
