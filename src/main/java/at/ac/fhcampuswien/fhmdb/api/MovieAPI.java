@@ -10,10 +10,129 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class MovieAPI {
+
+    //private static final String URL = "https://prog2.fh-campuswien.ac.at/movies"; // https if certificates work
+
     public static final String DELIMITER = "&";
-    private static final String URL = "https://prog2.fh-campuswien.ac.at/movies"; // https if certificates work
     private static final OkHttpClient client = new OkHttpClient();
 
+    public static class UrlBuilder {
+        private String protocol = "https";
+        private String domain;
+        private String path;
+        private String query;
+
+        public UrlBuilder withProtocol(String protocol) {
+            this.protocol = protocol;
+            return this;
+        }
+
+        public UrlBuilder withDomain(String domain) {
+            this.domain = domain;
+            return this;
+        }
+
+        public UrlBuilder withPath(String path) {
+            this.path = path;
+            return this;
+        }
+
+        public UrlBuilder withQuery(String query) {
+            this.query = query;
+            return this;
+        }
+
+        public String build() {
+            StringBuilder url = new StringBuilder();
+
+            url.append(protocol).append("://");
+
+            if (domain != null) {
+                url.append(domain);
+            }
+
+            if (path != null) {
+                url.append("/").append(path);
+            }
+
+            if (query != null) {
+                url.append("?").append(query);
+            }
+
+            return url.toString();
+        }
+    }
+
+    public static List<Movie> getAllMovies() throws MovieApiException {
+        return getAllMovies(null, null, null, null);
+    }
+
+    public static List<Movie> getAllMovies(String query, Genre genre, String releaseYear, String ratingFrom) throws MovieApiException{
+        UrlBuilder urlBuilder = new UrlBuilder();
+        urlBuilder.withProtocol("https")
+                .withDomain("prog2.fh-campuswien.ac.at")
+                .withPath("movies");
+
+        StringBuilder queryBuilder = new StringBuilder();
+        if (query != null) {
+            queryBuilder.append("query=").append(query).append("&");
+        }
+        if (genre != null) {
+            queryBuilder.append("genre=").append(genre).append("&");
+        }
+        if (releaseYear != null) {
+            queryBuilder.append("releaseYear=").append(releaseYear).append("&");
+        }
+        if (ratingFrom != null) {
+            queryBuilder.append("ratingFrom=").append(ratingFrom);
+        }
+
+        urlBuilder.withQuery(queryBuilder.toString());
+
+        String url = urlBuilder.build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .removeHeader("User-Agent")
+                .addHeader("User-Agent", "http.agent")  // needed for the server to accept the request
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String responseBody = Objects.requireNonNull(response.body()).string();
+
+            // Check if the response is an array
+            if (responseBody.startsWith("[")) {
+                Gson gson = new Gson();
+                Movie[] movies = gson.fromJson(responseBody, Movie[].class);
+                return Arrays.asList(movies);
+            } else {
+                throw new MovieApiException("Unexpected response from the API: " + responseBody);
+            }
+        } catch (Exception e) {
+            throw new MovieApiException(e.getMessage());
+        }
+    }
+
+    public Movie requestMovieById(UUID id) throws MovieApiException {
+        UrlBuilder urlBuilder = new UrlBuilder();
+        String url = urlBuilder.withProtocol("https")
+                .withDomain("prog2.fh-campuswien.ac.at")
+                .withPath("movies/" + id)
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            Gson gson = new Gson();
+            return gson.fromJson(Objects.requireNonNull(response.body()).string(), Movie.class);
+        } catch (Exception e) {
+            throw new MovieApiException(e.getMessage());
+        }
+    }
+
+    /*
     private String buildUrl(UUID id) {
         StringBuilder url = new StringBuilder(URL);
         if (id != null) {
@@ -47,7 +166,9 @@ public class MovieAPI {
 
         return url.toString();
     }
+    */
 
+    /*
     public static List<Movie> getAllMovies() throws MovieApiException {
         return getAllMovies(null, null, null, null);
     }
@@ -84,4 +205,6 @@ public class MovieAPI {
             throw new MovieApiException(e.getMessage());
         }
     }
+    */
+
 }
