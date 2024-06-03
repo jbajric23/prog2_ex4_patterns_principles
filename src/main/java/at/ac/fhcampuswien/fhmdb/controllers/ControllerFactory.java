@@ -1,29 +1,26 @@
 package at.ac.fhcampuswien.fhmdb.controllers;
 
-public class ControllerFactory {
-    private static MainController mainControllerInstance;
-    private static WatchlistController watchlistControllerInstance;
-    private static MovieListController movieListControllerInstance;
+import javafx.util.Callback;
+import java.util.HashMap;
+import java.util.Map;
 
+public class ControllerFactory implements Callback<Class<?>, Object> {
+    private final Map<Class<?>, Object> singletons = new HashMap<>();
 
-    public static Object getControllerInstance(Class<?> controllerClass) {
-        if (controllerClass == MainController.class) {
-            if (mainControllerInstance == null) {
-                mainControllerInstance = new MainController();
+    @Override
+    public Object call(Class<?> type) {
+        if (!singletons.containsKey(type)) {
+            try {
+                singletons.put(type, type.getDeclaredConstructor().newInstance());
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
-            return mainControllerInstance;
-        } else if (controllerClass == WatchlistController.class) {
-            if (watchlistControllerInstance == null) {
-                watchlistControllerInstance = new WatchlistController();
-            }
-            return watchlistControllerInstance;
-        } else if (controllerClass == MovieListController.class) {
-            if (movieListControllerInstance == null) {
-                movieListControllerInstance = new MovieListController();
-            }
-            return movieListControllerInstance;
-        } else {
-            throw new IllegalArgumentException("Invalid controller class: " + controllerClass);
         }
+        return singletons.get(type);
+    }
+
+    public <T> T getController(Class<T> type) {
+        return type.cast(call(type));
     }
 }
