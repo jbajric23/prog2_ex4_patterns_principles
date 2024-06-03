@@ -217,7 +217,7 @@ public class MovieListController implements Initializable, Observer {
         observableMovies.addAll(filteredMovies);
     }
 
-    public void searchBtnClicked(ActionEvent actionEvent) {
+    public void searchBtnClicked(ActionEvent actionEvent) throws MovieApiException {
         String searchQuery = searchField.getText().trim().toLowerCase();
         String releaseYear = validateComboboxValue(releaseYearComboBox.getSelectionModel().getSelectedItem());
         String ratingFrom = validateComboboxValue(ratingFromComboBox.getSelectionModel().getSelectedItem());
@@ -247,15 +247,8 @@ public class MovieListController implements Initializable, Observer {
         return null;
     }
 
-    public List<Movie> getMovies(String searchQuery, Genre genre, String releaseYear, String ratingFrom) {
-        try {
-            return MovieAPI.getAllMovies(searchQuery, genre, releaseYear, ratingFrom);
-        } catch (MovieApiException e) {
-            System.out.println(e.getMessage());
-            UserDialog dialog = new UserDialog("MovieApi Error", "Could not load movies from api.");
-            dialog.show();
-            return new ArrayList<>();
-        }
+    public List<Movie> getMovies(String searchQuery, Genre genre, String releaseYear, String ratingFrom) throws MovieApiException {
+        return MovieAPI.getAllMovies(searchQuery, genre, releaseYear, ratingFrom);
     }
 
     /**
