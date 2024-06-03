@@ -5,24 +5,25 @@ public class ControllerFactory {
     private static WatchlistController watchlistControllerInstance;
     private static MovieListController movieListControllerInstance;
 
-    public static MainController getMainControllerInstance() {
-        if (mainControllerInstance == null) {
-            mainControllerInstance = new MainController();
-        }
-        return mainControllerInstance;
-    }
 
-    public static WatchlistController getWatchlistControllerInstance() {
-        if (watchlistControllerInstance == null) {
-            watchlistControllerInstance = new WatchlistController();
+    public static Object getControllerInstance(Class<?> controllerClass) {
+        if (controllerClass == MainController.class) {
+            if (mainControllerInstance == null) {
+                mainControllerInstance = new MainController();
+            }
+            return mainControllerInstance;
+        } else if (controllerClass == WatchlistController.class) {
+            if (watchlistControllerInstance == null) {
+                watchlistControllerInstance = new WatchlistController();
+            }
+            return watchlistControllerInstance;
+        } else if (controllerClass == MovieListController.class) {
+            if (movieListControllerInstance == null) {
+                movieListControllerInstance = new MovieListController();
+            }
+            return movieListControllerInstance;
+        } else {
+            throw new IllegalArgumentException("Invalid controller class: " + controllerClass);
         }
-        return watchlistControllerInstance;
-    }
-
-    public static MovieListController getMovieListControllerInstance() {
-        if (movieListControllerInstance == null) {
-            movieListControllerInstance = new MovieListController();
-        }
-        return movieListControllerInstance;
     }
 }
