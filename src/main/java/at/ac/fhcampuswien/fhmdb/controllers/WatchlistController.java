@@ -2,6 +2,7 @@ package at.ac.fhcampuswien.fhmdb.controllers;
 
 import at.ac.fhcampuswien.fhmdb.ClickEventHandler;
 import at.ac.fhcampuswien.fhmdb.database.*;
+import at.ac.fhcampuswien.fhmdb.enums.UpdateType;
 import at.ac.fhcampuswien.fhmdb.ui.UserDialog;
 import at.ac.fhcampuswien.fhmdb.ui.WatchlistCell;
 import com.jfoenix.controls.JFXListView;
@@ -73,7 +74,10 @@ public class WatchlistController implements Initializable, Observer {
     }
 
     @Override
-    public void update() {
-        initialize(null, null);
+    public void update(UpdateType updateType) {
+        if (updateType == UpdateType.REMOVED) {
+            UserDialog dialog = new UserDialog("Information", "Movie was removed from Watchlist.");
+            dialog.show();
+        }
     }
 }

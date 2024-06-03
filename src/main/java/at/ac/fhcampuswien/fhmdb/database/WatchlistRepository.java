@@ -1,5 +1,6 @@
 package at.ac.fhcampuswien.fhmdb.database;
 
+import at.ac.fhcampuswien.fhmdb.enums.UpdateType;
 import com.j256.ormlite.dao.Dao;
 
 import java.util.ArrayList;
@@ -62,15 +63,22 @@ public class WatchlistRepository implements Oberservable{
             e.printStackTrace();
             throw new DataBaseException("Error while adding to watchlist");
         } finally {
-            notifyObservers(); // Notify observers after the movie has been added
+            notifyObservers(UpdateType.ADDED); // Notify observers after the movie has been added
         }
     }
 
     public int removeFromWatchlist(String apiId) throws DataBaseException {
         try {
-            return dao.delete(dao.queryBuilder().where().eq("apiId", apiId).query());
+            int result = dao.delete(dao.queryBuilder().where().eq("apiId", apiId).query());
+            if (result > 0) {
+                lastModifiedMovie = new WatchlistMovieEntity(apiId); // Set the last modified movie
+                wasAddedToWatchlist = false; // Set wasAddedToWatchlist to false
+            }
+            return result;
         } catch (Exception e) {
             throw new DataBaseException("Error while removing from watchlist");
+        } finally {
+            notifyObservers(UpdateType.REMOVED); // Notify observers after the movie has been removed
         }
     }
 
@@ -104,10 +112,10 @@ public class WatchlistRepository implements Oberservable{
     }
 
     @Override
-    public void notifyObservers() {
+    public void notifyObservers(UpdateType updateType) {
         System.out.println("Notifying observers");
         for (Observer observer : observers) {
-            observer.update(); //notify all observers
+            observer.update(updateType); //notify all observers
         }
     }
 }

@@ -4,6 +4,7 @@ import at.ac.fhcampuswien.fhmdb.ClickEventHandler;
 import at.ac.fhcampuswien.fhmdb.api.MovieAPI;
 import at.ac.fhcampuswien.fhmdb.api.MovieApiException;
 import at.ac.fhcampuswien.fhmdb.database.*;
+import at.ac.fhcampuswien.fhmdb.enums.UpdateType;
 import at.ac.fhcampuswien.fhmdb.models.*;
 import at.ac.fhcampuswien.fhmdb.ui.MovieCell;
 import at.ac.fhcampuswien.fhmdb.ui.UserDialog;
@@ -262,25 +263,26 @@ public class MovieListController implements Initializable, Observer {
     }
 
     @Override
-    public void update() {
-        System.out.println("Update called");
-        try {
-            WatchlistRepository repository = WatchlistRepository.getInstance();
-            WatchlistMovieEntity lastModifiedMovie = repository.getLastModifiedMovie();
-            if (lastModifiedMovie != null) {
+public void update(UpdateType updateType) {
+    try {
+        WatchlistRepository repository = WatchlistRepository.getInstance();
+        WatchlistMovieEntity lastModifiedMovie = repository.getLastModifiedMovie();
+        if (lastModifiedMovie != null) {
+            if (updateType == UpdateType.ADDED) {
                 if (repository.wasAddedToWatchlist()) {
-                    UserDialog dialog = new UserDialog("Information", "Der Film  wurde zur Watchlist hinzugefügt.");
+                    UserDialog dialog = new UserDialog("Information", "Movie was added to Watchlist.");
                     dialog.show();
                 } else {
-                    UserDialog dialog = new UserDialog("Information", "Der Film  ist bereits in der Watchlist.");
+                    UserDialog dialog = new UserDialog("Information", "Movie has already been added to the Watchlist.");
                     dialog.show();
                 }
             }
-        } catch (DataBaseException e) {
-            UserDialog dialog = new UserDialog("Database Error", "Could not load watchlist from database");
-            dialog.show();
-            e.printStackTrace();
         }
+    } catch (DataBaseException e) {
+        UserDialog dialog = new UserDialog("Database Error", "Could not load watchlist from database");
+        dialog.show();
+        e.printStackTrace();
     }
+}
 }
 
